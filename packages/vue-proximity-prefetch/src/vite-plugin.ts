@@ -206,7 +206,7 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
           const style = document.createElement('style');
           style.textContent = 
             '.ppf-debug-highlight {' +
-            '  border: 2px solid red !important;' +
+            '  box-shadow: 0 0 0 2px red !important;' +
             '  box-sizing: border-box;' +
             '}';
           document.head.appendChild(style);
