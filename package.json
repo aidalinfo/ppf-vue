@@ -1,0 +1,20 @@
+{
+  "name": "vue-proximity-prefetch-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "pnpm install && pnpm run build:plugin",
+    "dev:app": "pnpm --filter app-example run dev",
+    "build:plugin": "pnpm --filter vue-proximity-prefetch run build",
+    "build:all": "pnpm run build:plugin && pnpm --filter app-example run build",
+    "start": "pnpm run dev:app"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6"
+}
