@@ -24,6 +24,6 @@
     "vuepress": "2.0.0-rc.20"
   },
   "dependencies": {
-    "v-proximity-prefetch": "link:../vue-proximity-prefetch"
+    "v-proximity-prefetch": "^1.0.0"
   }
 }
