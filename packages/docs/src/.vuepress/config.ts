@@ -4,6 +4,7 @@ import { viteBundler } from '@vuepress/bundler-vite'
 
 export default defineUserConfig({
   bundler: viteBundler(),
+  base: '/v-proximity-prefetch/', // Ajout du chemin de base pour GitHub Pages
   lang: 'en-US',
   title: 'Vue Proximity Prefetch',
   description: 'Boost your Vue app\'s perceived performance by prefetching routes when the mouse approaches links',
