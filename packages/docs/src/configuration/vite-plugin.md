@@ -11,6 +11,10 @@ The `viteProximityPrefetch` Vite plugin offers a simpler method for integrating 
 | `maxPrefetch` | `number` | `3` | Maximum number of routes to prefetch simultaneously |
 | `automaticPrefetch` | `boolean` | `true` | Enable automatic route prefetching |
 | `debug` | `boolean` | `false` | Enable debug logs |
+| `mobileSupport` | `boolean` | `true` | Enable mobile support with viewport-based prefetching |
+| `viewportMargin` | `number` | `300` | Viewport margin in pixels for mobile prefetching |
+| `prefetchAllLinks` | `boolean` | `false` | Enable prefetching of all links on the page at once |
+| `prefetchAllLinksDelay` | `number` | `1500` | Delay in ms before prefetching all links |
 
 ## Option Details
 
@@ -64,6 +68,47 @@ viteProximityPrefetch({
 })
 ```
 
+### mobileSupport
+
+The `mobileSupport` option enables or disables special handling for touch devices. When enabled, the plugin will switch to viewport-based prefetching and respond to touch and scroll events.
+
+```js
+viteProximityPrefetch({
+  mobileSupport: true
+})
+```
+
+### viewportMargin
+
+The `viewportMargin` option defines how far outside the visible viewport (in pixels) links should be detected for prefetching on mobile devices. A larger value will prefetch links earlier as the user scrolls.
+
+```js
+viteProximityPrefetch({
+  viewportMargin: 500
+})
+```
+
+### prefetchAllLinks
+
+The `prefetchAllLinks` option enables prefetching of all internal links on the page at once. This is useful for small applications where you want to ensure all possible navigation targets are loaded ahead of time.
+
+```js
+viteProximityPrefetch({
+  prefetchAllLinks: true
+})
+```
+
+### prefetchAllLinksDelay
+
+The `prefetchAllLinksDelay` option defines the delay in milliseconds before starting to prefetch all links (when `prefetchAllLinks` is enabled). This delay prevents overwhelming the network immediately after page load.
+
+```js
+viteProximityPrefetch({
+  prefetchAllLinks: true,
+  prefetchAllLinksDelay: 2000
+})
+```
+
 ## Complete Example
 
 Here's a complete example of using the Vite plugin with all options configured:
@@ -82,7 +127,11 @@ export default defineConfig({
       predictionInterval: 50,
       maxPrefetch: 4,
       automaticPrefetch: true,
-      debug: process.env.NODE_ENV === 'development'
+      debug: process.env.NODE_ENV === 'development',
+      mobileSupport: true,
+      viewportMargin: 400,
+      prefetchAllLinks: false,
+      prefetchAllLinksDelay: 1500
     })
   ]
 })
@@ -104,7 +153,11 @@ export default defineConfig(({ mode }) => {
         predictionInterval: isDev ? 0 : 50,
         maxPrefetch: isDev ? 2 : 4,
         automaticPrefetch: true,
-        debug: isDev
+        debug: isDev,
+        mobileSupport: true,
+        viewportMargin: isDev ? 200 : 400,
+        prefetchAllLinks: !isDev, // Only prefetch all in production
+        prefetchAllLinksDelay: 2000
       })
     ]
   }

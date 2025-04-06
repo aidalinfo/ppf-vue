@@ -9,6 +9,10 @@ The `ProximityPrefetch` component accepts several props to customize its behavio
 | `threshold` | `number` | `200` | Distance in pixels at which prefetching triggers |
 | `predictionInterval` | `number` | `0` | Interval in ms to check link proximity (0 = reactive) |
 | `debug` | `boolean` | `false` | Enable debug logs |
+| `mobileSupport` | `boolean` | `true` | Enable mobile support with viewport-based prefetching |
+| `viewportMargin` | `number` | `300` | Viewport margin in pixels for mobile prefetching |
+| `prefetchAllLinks` | `boolean` | `false` | Enable prefetching of all links on the page at once |
+| `prefetchAllLinksDelay` | `number` | `1500` | Delay in ms before prefetching all links |
 
 ## Prop Details
 
@@ -42,6 +46,48 @@ The `debug` option enables or disables debug logs in the console. Useful during 
 </ProximityPrefetch>
 ```
 
+### mobileSupport
+
+The `mobileSupport` option enables or disables special handling for touch devices. When enabled, the component will switch to viewport-based prefetching and respond to touch events.
+
+```vue
+<ProximityPrefetch :mobile-support="true">
+  <router-view />
+</ProximityPrefetch>
+```
+
+### viewportMargin
+
+The `viewportMargin` option defines how far outside the visible viewport (in pixels) links should be detected for prefetching on mobile devices. A larger value will prefetch links earlier as the user scrolls.
+
+```vue
+<ProximityPrefetch :viewport-margin="500">
+  <router-view />
+</ProximityPrefetch>
+```
+
+### prefetchAllLinks
+
+The `prefetchAllLinks` option enables prefetching of all internal links on the page at once. This is useful for small applications where you want to ensure all possible navigation targets are loaded ahead of time.
+
+```vue
+<ProximityPrefetch :prefetch-all-links="true">
+  <router-view />
+</ProximityPrefetch>
+```
+
+### prefetchAllLinksDelay
+
+The `prefetchAllLinksDelay` option defines the delay in milliseconds before starting to prefetch all links (when `prefetchAllLinks` is enabled). This delay prevents overwhelming the network immediately after page load.
+
+```vue
+<ProximityPrefetch 
+  :prefetch-all-links="true"
+  :prefetch-all-links-delay="2000">
+  <router-view />
+</ProximityPrefetch>
+```
+
 ## Complete Example
 
 Here's an example of using the component with all props configured:
@@ -52,6 +98,10 @@ Here's an example of using the component with all props configured:
     :threshold="250" 
     :prediction-interval="50"
     :debug="process.env.NODE_ENV === 'development'"
+    :mobile-support="true"
+    :viewport-margin="400"
+    :prefetch-all-links="false"
+    :prefetch-all-links-delay="1500"
   >
     <router-view />
   </ProximityPrefetch>
@@ -74,7 +124,11 @@ import { ProximityPrefetch, type ProximityPrefetchProps } from 'v-proximity-pref
 const prefetchOptions: ProximityPrefetchProps = {
   threshold: 250,
   predictionInterval: 50,
-  debug: true
+  debug: true,
+  mobileSupport: true,
+  viewportMargin: 400,
+  prefetchAllLinks: false,
+  prefetchAllLinksDelay: 1500
 }
 </script>
 

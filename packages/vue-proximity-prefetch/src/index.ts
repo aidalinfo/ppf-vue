@@ -28,6 +28,10 @@ export interface ProximityPrefetchProps {
   mobileSupport?: boolean;
   /** Viewport margin for mobile prefetching */
   viewportMargin?: number;
+  /** Enable prefetching of all links on the page at once */
+  prefetchAllLinks?: boolean;
+  /** Delay before starting to prefetch all links (ms) */
+  prefetchAllLinksDelay?: number;
 }
 
 /**
@@ -48,6 +52,10 @@ export interface ProximityPrefetchOptions {
   mobileSupport?: boolean;
   /** Viewport margin for mobile prefetching */
   viewportMargin?: number;
+  /** Enable prefetching of all links on the page at once */
+  prefetchAllLinks?: boolean;
+  /** Delay before starting to prefetch all links (ms) */
+  prefetchAllLinksDelay?: number;
 }
 
 /**

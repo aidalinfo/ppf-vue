@@ -16,14 +16,14 @@ The project consists of:
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- pnpm (v7 or higher)
+- Node.js (v20 or higher)
+- pnpm (v10 or higher)
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/vue-proximity-prefetch.git
+   git clone https://github.com/aidalinfo/v-proximity-prefetch.git
    cd vue-proximity-prefetch
    ```
 

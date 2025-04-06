@@ -29,6 +29,10 @@ interface Props {
   mobileSupport?: boolean;
   /** Viewport margin for mobile prefetching */
   viewportMargin?: number;
+  /** Enable prefetching of all links on the page at once */
+  prefetchAllLinks?: boolean;
+  /** Delay before starting to prefetch all links (ms) */
+  prefetchAllLinksDelay?: number;
 }
 
 // Check if PPF_DEBUG environment variable is set
@@ -40,7 +44,9 @@ const props = withDefaults(defineProps<Props>(), {
   predictionInterval: 0,
   debug: false, // Debug disabled by default in production
   mobileSupport: true,
-  viewportMargin: 300
+  viewportMargin: 300,
+  prefetchAllLinks: false,
+  prefetchAllLinksDelay: 1500
 });
 
 // Determine if debug mode is enabled (either from props or PPF_DEBUG global)
@@ -346,6 +352,121 @@ const prefetchNearbyRoutes = (): void => {
 };
 
 /**
+ * Prefetch a single route
+ */
+const prefetchRoute = (route: string): void => {
+  // Skip already prefetched routes
+  if (prefetchedRoutes.value.has(route)) {
+    return;
+  }
+  
+  if (isDebugEnabled.value) {
+    console.log('[ProximityPrefetch] Prefetching:', route);
+  }
+  
+  try {
+    // Resolve the route to get corresponding route records
+    const resolved = router.resolve(route);
+    
+    // Trigger navigation to prefetch route components without actually navigating
+    router.getRoutes().forEach(routeRecord => {
+      if (routeRecord.path === resolved.path && routeRecord.components) {
+        // Load components without navigating
+        const comps = routeRecord.components;
+        Object.values(comps).forEach(comp => {
+          // Use a safer approach with explicit type casting
+          const asyncComp = comp as any;
+          
+          if (typeof asyncComp === 'function') {
+            try {
+              // Call component to trigger loading
+              asyncComp();
+            } catch (e) {
+              if (isDebugEnabled.value) {
+                console.error('[ProximityPrefetch] Error loading component:', e);
+              }
+            }
+          }
+        });
+      }
+    });
+    
+    // Mark as prefetched to avoid duplicate prefetching
+    prefetchedRoutes.value.add(route);
+    
+    // Add visual indicator for prefetched links in debug mode
+    if (isDebugEnabled.value) {
+      // Find all link elements pointing to this route
+      const matchingAnchors = Array.from(
+        document.querySelectorAll(`a[href="${route}"]`)
+      ) as HTMLAnchorElement[];
+      
+      matchingAnchors.forEach(anchor => {
+        // Add a red border directly to the link element if not already applied
+        if (!anchor.hasAttribute('data-ppf-debug-applied')) {
+          anchor.setAttribute('data-ppf-debug-applied', 'true');
+          anchor.classList.add('ppf-debug-highlight');
+          anchor.title = `Prefetched: ${route}`;
+        }
+      });
+    }
+  } catch (err) {
+    if (isDebugEnabled.value) {
+      console.error('[ProximityPrefetch] Error prefetching route:', err);
+    }
+  }
+};
+
+/**
+ * Prefetch all links on the page
+ */
+const prefetchAllPageLinks = (): void => {
+  updateLinks();
+  
+  if (!links.value.length) {
+    if (isDebugEnabled.value) {
+      console.log('[ProximityPrefetch] No links found to prefetch');
+    }
+    return;
+  }
+  
+  if (isDebugEnabled.value) {
+    console.log(`[ProximityPrefetch] Prefetching all links: ${links.value.length} links found`);
+  }
+  
+  // Get unique routes
+  const uniqueRoutes = [...new Set(links.value.map(link => link.href))];
+  
+  if (isDebugEnabled.value) {
+    console.log(`[ProximityPrefetch] Unique routes to prefetch: ${uniqueRoutes.length}`);
+  }
+  
+  // Batch prefetching with small delays to avoid network congestion
+  let processed = 0;
+  const batchSize = 3;
+  const batchDelay = 300;
+  
+  const processBatch = () => {
+    const batch = uniqueRoutes.slice(processed, processed + batchSize);
+    if (batch.length === 0) return;
+    
+    for (const route of batch) {
+      prefetchRoute(route);
+    }
+    
+    processed += batch.length;
+    
+    if (processed < uniqueRoutes.length) {
+      setTimeout(processBatch, batchDelay);
+    } else if (isDebugEnabled.value) {
+      console.log(`[ProximityPrefetch] Finished prefetching all links: ${processed} routes prefetched`);
+    }
+  };
+  
+  processBatch();
+};
+
+/**
  * Handle mouse movement events
  */
 const handleMouseMove = (e: MouseEvent): void => {
@@ -470,6 +591,13 @@ onMounted(() => {
     watch(mousePosition, () => {
       throttledPrefetch();
     });
+  }
+
+  // Prefetch all links if enabled
+  if (props.prefetchAllLinks) {
+    setTimeout(() => {
+      prefetchAllPageLinks();
+    }, props.prefetchAllLinksDelay);
   }
 
   // Clean up event listeners and observers on component unmount

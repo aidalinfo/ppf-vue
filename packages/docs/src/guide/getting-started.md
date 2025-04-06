@@ -44,7 +44,11 @@ app.mount('#app')
 
   <main>
     <!-- Wrap your router-view with ProximityPrefetch -->
-    <ProximityPrefetch :threshold="200" :prediction-interval="0">
+    <ProximityPrefetch 
+      :threshold="200" 
+      :prediction-interval="0"
+      :mobile-support="true"
+      :viewport-margin="300">
       <router-view />
     </ProximityPrefetch>
   </main>
@@ -72,10 +76,56 @@ export default defineConfig({
       threshold: 200,
       predictionInterval: 0,
       maxPrefetch: 3,
-      automaticPrefetch: true // Enable automatic prefetching!
+      automaticPrefetch: true, // Enable automatic prefetching!
+      mobileSupport: true,     // Enable mobile device support
+      viewportMargin: 300      // Links within 300px of viewport will be prefetched on mobile
     })
   ]
 })
+```
+
+## Mobile Device Support
+
+Vue Proximity Prefetch automatically detects mobile devices and adapts its prefetching strategy. On mobile devices, the plugin switches from tracking mouse movements to detecting which links are within or near the viewport:
+
+```js
+viteProximityPrefetch({
+  automaticPrefetch: true,
+  mobileSupport: true,       // Enable mobile support (default is true)
+  viewportMargin: 500        // Prefetch links within 500px of the visible viewport
+})
+```
+
+With the Vue component:
+
+```vue
+<ProximityPrefetch 
+  :mobile-support="true"
+  :viewport-margin="500">
+  <router-view />
+</ProximityPrefetch>
+```
+
+## Prefetching All Links
+
+For smaller applications or important landing pages, you might want to prefetch all internal links at once:
+
+```js
+viteProximityPrefetch({
+  automaticPrefetch: true,
+  prefetchAllLinks: true,         // Enable prefetching all links
+  prefetchAllLinksDelay: 2000     // Wait 2 seconds after page load before prefetching
+})
+```
+
+With the Vue component:
+
+```vue
+<ProximityPrefetch 
+  :prefetch-all-links="true"
+  :prefetch-all-links-delay="2000">
+  <router-view />
+</ProximityPrefetch>
 ```
 
 ## Configuring Options

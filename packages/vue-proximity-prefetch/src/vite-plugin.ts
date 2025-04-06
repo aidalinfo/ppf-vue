@@ -59,6 +59,20 @@ export interface VueProximityPrefetchOptions {
    * @default 300
    */
   viewportMargin?: number;
+  
+  /**
+   * Enable prefetching of all links on the page at once
+   * When true, all internal links will be prefetched after page load
+   * @default false
+   */
+  prefetchAllLinks?: boolean;
+  
+  /**
+   * Delay (in milliseconds) before starting to prefetch all links
+   * Only used when prefetchAllLinks is true
+   * @default 1500
+   */
+  prefetchAllLinksDelay?: number;
 }
 
 /**
@@ -71,7 +85,9 @@ const DEFAULT_OPTIONS: Required<VueProximityPrefetchOptions> = {
   debug: false,
   automaticPrefetch: false,
   mobileSupport: true,
-  viewportMargin: 300
+  viewportMargin: 300,
+  prefetchAllLinks: false,
+  prefetchAllLinksDelay: 1500
 };
 
 /**
@@ -92,7 +108,9 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         maxPrefetch: ${options.maxPrefetch},
         debug: ${options.debug} || (typeof window !== 'undefined' && window.PPF_DEBUG === true),
         mobileSupport: ${options.mobileSupport},
-        viewportMargin: ${options.viewportMargin}
+        viewportMargin: ${options.viewportMargin},
+        prefetchAllLinks: ${options.prefetchAllLinks},
+        prefetchAllLinksDelay: ${options.prefetchAllLinksDelay}
       };
       
       // Utils
@@ -142,6 +160,77 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
             return null;
           })
           .filter(link => link !== null);
+      }
+      
+      // Prefetch a single route
+      function prefetchRoute(route) {
+        if (prefetchedRoutes.has(route)) return;
+        
+        try {
+          // Create a prefetch link element
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = route;
+          link.as = 'document';
+          document.head.appendChild(link);
+          
+          prefetchedRoutes.add(route);
+          
+          // In debug mode, add a visual indicator around the link
+          if (config.debug) {
+            // Find all link elements pointing to this route
+            const matchingAnchors = Array.from(document.querySelectorAll('a[href="' + route + '"]'));
+            
+            matchingAnchors.forEach(anchor => {
+              // Add a red border directly to the link element if not already applied
+              if (!anchor.hasAttribute('data-ppf-debug-applied')) {
+                anchor.setAttribute('data-ppf-debug-applied', 'true');
+                anchor.classList.add('ppf-debug-highlight');
+                anchor.title = 'Prefetched: ' + route;
+              }
+            });
+          }
+          
+          return true;
+        } catch (err) {
+          console.error('[ProximityPrefetch] Error prefetching route:', route, err);
+          return false;
+        }
+      }
+      
+      // Prefetch all links on the page
+      function prefetchAllPageLinks() {
+        const links = getLinks();
+        if (!links.length) return;
+        
+        log('Prefetching all links on page: ' + links.length + ' links found');
+        
+        // Get unique routes
+        const uniqueRoutes = [...new Set(links.map(link => link.href))];
+        
+        // Batch prefetching with small delays to avoid network congestion
+        let processed = 0;
+        const batchSize = 3;
+        const batchDelay = 300;
+        
+        function processBatch() {
+          const batch = uniqueRoutes.slice(processed, processed + batchSize);
+          if (batch.length === 0) return;
+          
+          for (const route of batch) {
+            prefetchRoute(route);
+          }
+          
+          processed += batch.length;
+          
+          if (processed < uniqueRoutes.length) {
+            setTimeout(processBatch, batchDelay);
+          } else if (config.debug) {
+            log('Finished prefetching all links: ' + processed + ' routes prefetched');
+          }
+        }
+        
+        processBatch();
       }
       
       // Check if a link is in or near the viewport
@@ -228,37 +317,7 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         
         // Prefetch routes
         for (const route of routesToPrefetch) {
-          if (prefetchedRoutes.has(route)) continue;
-          
-          log('Prefetching route:', route);
-          
-          try {
-            // Create a prefetch link element
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = route;
-            link.as = 'document';
-            document.head.appendChild(link);
-            
-            prefetchedRoutes.add(route);
-            
-            // In debug mode, add a visual indicator around the link
-            if (config.debug) {
-              // Find all link elements pointing to this route
-              const matchingAnchors = Array.from(document.querySelectorAll('a[href="' + route + '"]'));
-              
-              matchingAnchors.forEach(anchor => {
-                // Add a red border directly to the link element if not already applied
-                if (!anchor.hasAttribute('data-ppf-debug-applied')) {
-                  anchor.setAttribute('data-ppf-debug-applied', 'true');
-                  anchor.classList.add('ppf-debug-highlight');
-                  anchor.title = 'Prefetched: ' + route;
-                }
-              });
-            }
-          } catch (err) {
-            console.error('[ProximityPrefetch] Error prefetching route:', route, err);
-          }
+          prefetchRoute(route);
         }
       }
       
@@ -277,6 +336,12 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
             '  box-sizing: border-box;' +
             '}';
           document.head.appendChild(style);
+        }
+        
+        // If prefetchAllLinks is enabled, prefetch all links after a delay
+        if (config.prefetchAllLinks) {
+          log('prefetchAllLinks enabled, will prefetch all links after ' + config.prefetchAllLinksDelay + 'ms');
+          setTimeout(prefetchAllPageLinks, config.prefetchAllLinksDelay);
         }
         
         if (isTouchDevice && config.mobileSupport) {

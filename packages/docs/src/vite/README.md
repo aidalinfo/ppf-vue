@@ -40,12 +40,20 @@ interface ProximityPrefetchOptions {
   maxPrefetch?: number;
   automaticPrefetch?: boolean;
   debug?: boolean;
+  mobileSupport?: boolean;
+  viewportMargin?: number;
+  prefetchAllLinks?: boolean;
+  prefetchAllLinksDelay?: number;
 }
 
 interface ProximityPrefetchProps {
   threshold?: number;
   predictionInterval?: number;
   debug?: boolean;
+  mobileSupport?: boolean;
+  viewportMargin?: number;
+  prefetchAllLinks?: boolean;
+  prefetchAllLinksDelay?: number;
 }
 ```
 
@@ -59,6 +67,30 @@ window.PPF_DEBUG = true
 
 // Access the prefetch handler instance (when available)
 window.__PPF_INSTANCE
+```
+
+## Cross-Platform Support
+
+Vue Proximity Prefetch automatically detects the user's device type and adapts its prefetching strategy:
+
+- **Desktop devices**: Uses mouse movement tracking and cursor proximity
+- **Mobile devices**: Uses viewport-based detection and reacts to scroll and touch events
+
+## Bulk Prefetching
+
+For smaller applications or landing pages, you can enable the prefetchAllLinks option to load all internal navigation links at once:
+
+```js
+// In Vite plugin
+viteProximityPrefetch({
+  prefetchAllLinks: true,
+  prefetchAllLinksDelay: 2000 // Wait 2 seconds before prefetching
+})
+
+// With Vue component
+<ProximityPrefetch :prefetch-all-links="true" :prefetch-all-links-delay="2000">
+  <router-view />
+</ProximityPrefetch>
 ```
 
 Check out the following pages for specific details on each part of the API.
