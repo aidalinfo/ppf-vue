@@ -1,8 +1,8 @@
 # Vue Proximity Prefetch
 
-[![npm version](https://img.shields.io/npm/v/v-proxmity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/v-proxmity-prefetch)
+[![npm version](https://img.shields.io/npm/v/v-proximity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/v-proximity-prefetch)
 [![GitHub license](https://img.shields.io/github/license/aidalinfo/ppf-vue?style=flat-square)](https://github.com/aidalinfo/ppf-vue/blob/main/LICENSE)
-[![npm downloads](https://img.shields.io/npm/dm/v-proxmity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/v-proxmity-prefetch)
+[![npm downloads](https://img.shields.io/npm/dm/v-proximity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/v-proximity-prefetch)
 [![GitHub stars](https://img.shields.io/github/stars/aidalinfo/ppf-vue.svg?style=flat-square&label=★)](https://github.com/aidalinfo/ppf-vue)
 
 <div align="center">
@@ -23,13 +23,13 @@
 
 ```bash
 # npm
-npm install v-proxmity-prefetch
+npm install v-proximity-prefetch
 
 # yarn
-yarn add v-proxmity-prefetch
+yarn add v-proximity-prefetch
 
 # pnpm
-pnpm add v-proxmity-prefetch
+pnpm add v-proximity-prefetch
 ```
 
 ## Getting Started
@@ -47,7 +47,7 @@ This method gives you fine-grained control over which parts of your app use prox
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
-import { ProximityPrefetchPlugin } from 'v-proxmity-prefetch'
+import { ProximityPrefetchPlugin } from 'v-proximity-prefetch'
 
 const app = createApp(App)
 const router = createRouter({
@@ -85,7 +85,7 @@ app.mount('#app')
 </template>
 
 <script setup>
-import { ProximityPrefetch } from 'v-proxmity-prefetch'
+import { ProximityPrefetch } from 'v-proximity-prefetch'
 </script>
 ```
 
@@ -97,7 +97,7 @@ This method is simpler and doesn't require adding components to your app. Perfec
 // vite.config.js or vite.config.ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { viteProximityPrefetch } from 'v-proxmity-prefetch'
+import { viteProximityPrefetch } from 'v-proximity-prefetch'
 
 export default defineConfig({
   plugins: [
