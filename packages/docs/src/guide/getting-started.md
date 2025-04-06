@@ -1,6 +1,6 @@
 # Getting Started
 
-After [installing Vue Proximity Prefetch](/guide/installation), you can integrate it into your Vue application in two different ways. Choose the one that best suits your needs.
+After [installing Vue Proximity Prefetch](/v-proximity-prefetch/guide/installation), you can integrate it into your Vue application in two different ways. Choose the one that best suits your needs.
 
 ## Method 1: Using the Vue Component and Plugin
 
@@ -80,7 +80,7 @@ export default defineConfig({
 
 ## Configuring Options
 
-Vue Proximity Prefetch offers several configuration options to adapt it to your needs. See the [Configuration](/configuration/) section for more details on the different options available.
+Vue Proximity Prefetch offers several configuration options to adapt it to your needs. See the [Configuration](/v-proximity-prefetch/configuration/) section for more details on the different options available.
 
 ## Debug Mode
 
@@ -97,6 +97,6 @@ Or in the browser console:
 window.PPF_DEBUG = true
 ```
 
-## Complete Example
+## Github
 
-For a complete integration example, you can check out the [example application](https://vue-proximity-prefetch-demo.netlify.app/) or explore the [source code on GitHub](https://github.com/aidalinfo/ppf-vue).
+Explore the [source code on GitHub](https://github.com/aidalinfo/v-proximity-prefetch).
