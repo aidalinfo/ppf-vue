@@ -9,6 +9,7 @@ Un plugin Vue.js qui précharge automatiquement les routes lorsque l'utilisateur
 - Optimise l'expérience utilisateur en réduisant les temps de chargement perçus
 - Fonctionne avec Vue Router
 - S'intègre facilement avec Vite
+- Peut être utilisé comme simple plugin Vite sans avoir à ajouter le composant Vue
 
 ## Installation
 
@@ -22,14 +23,21 @@ pnpm add vue-proximity-prefetch
 
 ## Utilisation
 
-### 1. Intégrer le plugin dans votre application Vue
+Vous pouvez utiliser Vue Proximity Prefetch de deux façons :
+
+1. **Avec le composant Vue** : Utilisation traditionnelle avec le composant Vue et le plugin Vue
+2. **Plugin Vite seulement** : Utilisation simplifiée qui ne nécessite pas d'ajouter de composant à votre application
+
+### Option 1: Intégrer le plugin Vue et le composant
+
+#### 1. Intégrer le plugin dans votre application Vue
 
 ```ts
 // main.ts
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
-import ProximityPrefetchPlugin from 'vue-proximity-prefetch'
+import { ProximityPrefetchPlugin } from 'vue-proximity-prefetch'
 
 const app = createApp(App)
 const router = createRouter({
@@ -45,7 +53,7 @@ app.use(ProximityPrefetchPlugin)
 app.mount('#app')
 ```
 
-### 2. Utiliser le composant ProximityPrefetch
+#### 2. Utiliser le composant ProximityPrefetch
 
 ```vue
 <!-- App.vue -->
@@ -72,7 +80,9 @@ import { ProximityPrefetch } from 'vue-proximity-prefetch'
 </script>
 ```
 
-### 3. Configurer le plugin Vite (optionnel)
+### Option 2: Utiliser uniquement le plugin Vite (nouveauté)
+
+Cette méthode est plus simple car elle ne nécessite pas d'ajouter le composant Vue ni d'utiliser le plugin Vue. Le plugin Vite injecte automatiquement le code nécessaire pour le préchargement basé sur la proximité.
 
 ```ts
 // vite.config.ts
@@ -86,7 +96,9 @@ export default defineConfig({
     viteProximityPrefetch({
       threshold: 200,
       predictionInterval: 100,
-      debug: true
+      maxPrefetch: 3,
+      debug: true,
+      automaticPrefetch: true // Active le préchargement automatique sans composant Vue
     })
   ]
 })
@@ -110,6 +122,19 @@ export default defineConfig({
 | `predictionInterval` | `number` | `0` | Intervalle en ms pour vérifier et prédire les routes à précharger |
 | `maxPrefetch` | `number` | `3` | Nombre maximum de routes à précharger simultanément |
 | `debug` | `boolean` | `false` | Active les logs de débogage |
+| `automaticPrefetch` | `boolean` | `false` | Active le préchargement automatique sans avoir besoin du composant Vue |
+
+## Quand utiliser le plugin Vite ou le composant Vue ?
+
+- **Plugin Vite uniquement** (`automaticPrefetch: true`) :
+  - Avantage : Configuration minimale, pas besoin de modifier votre application
+  - Utilisation : Projets simples ou prototypes où vous voulez rapidement ajouter le préchargement
+  - Fonctionnement : Utilise l'API Prefetch standard du navigateur
+
+- **Composant Vue** :
+  - Avantage : Préchargement plus avancé qui fonctionne avec Vue Router et charge les composants
+  - Utilisation : Applications complexes où vous voulez un contrôle précis sur le préchargement
+  - Fonctionnement : Précharge les composants Vue Router en plus des routes
 
 ## Licence
 

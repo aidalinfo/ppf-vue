@@ -5,7 +5,7 @@
  * This component tracks mouse movements and prefetches routes when the cursor
  * approaches links, improving perceived navigation speed.
  */
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 /**
@@ -20,12 +20,18 @@ interface Props {
   debug?: boolean;
 }
 
+// Check if PPF_DEBUG environment variable is set
+const PPF_DEBUG = typeof window !== 'undefined' && window.PPF_DEBUG === true;
+
 // Default prop values
 const props = withDefaults(defineProps<Props>(), {
   threshold: 200,
   predictionInterval: 0,
   debug: false // Debug disabled by default in production
 });
+
+// Determine if debug mode is enabled (either from props or PPF_DEBUG global)
+const isDebugEnabled = computed(() => props.debug || PPF_DEBUG);
 
 // Router access for prefetching
 const router = useRouter();
@@ -57,7 +63,7 @@ const updateLinks = () => {
     document.querySelectorAll('a')
   ) as HTMLAnchorElement[];
   
-  if (props.debug) {
+  if (isDebugEnabled.value) {
     console.debug(`[ProximityPrefetch] Found ${anchors.length} links in the page`);
   }
   
@@ -70,7 +76,7 @@ const updateLinks = () => {
       if (href && (href.startsWith('/') || !href.includes('://')) && !href.startsWith('#')) {
         const rect = el.getBoundingClientRect();
         
-        if (props.debug) {
+        if (isDebugEnabled.value) {
           console.debug(`[ProximityPrefetch] Link found: ${href}, rect:`, rect);
         }
         
@@ -133,7 +139,7 @@ const checkProximity = (): boolean => {
     (link) => link.distance < props.threshold
   );
   
-  if (props.debug && closestLinks.length > 0) {
+  if (isDebugEnabled.value && closestLinks.length > 0) {
     console.debug(`[ProximityPrefetch] ${closestLinks.length} links within threshold ${props.threshold}px`);
     closestLinks.forEach(link => {
       console.debug(`[ProximityPrefetch] Link: ${link.href}, Distance: ${link.distance.toFixed(2)}px`);
@@ -194,7 +200,7 @@ const prefetchNearbyRoutes = (): void => {
       continue;
     }
     
-    if (props.debug) {
+    if (isDebugEnabled.value) {
       console.log('[ProximityPrefetch] Prefetching:', route);
     }
     
@@ -215,7 +221,7 @@ const prefetchNearbyRoutes = (): void => {
                 // Call component to trigger loading
                 asyncComp();
               } catch (e) {
-                if (props.debug) {
+                if (isDebugEnabled.value) {
                   console.error('[ProximityPrefetch] Error loading component:', e);
                 }
               }
@@ -233,11 +239,11 @@ const prefetchNearbyRoutes = (): void => {
 };
 
 onMounted(() => {
-  if (props.debug) {
+  if (isDebugEnabled.value) {
     console.log('[ProximityPrefetch] Component mounted with options:', {
       threshold: props.threshold,
       predictionInterval: props.predictionInterval,
-      debug: props.debug
+      debug: isDebugEnabled.value
     });
   }
 
@@ -254,7 +260,7 @@ onMounted(() => {
   // Scan for links after a short delay to ensure DOM is fully loaded
   setTimeout(() => {
     updateLinks();
-    if (props.debug) {
+    if (isDebugEnabled.value) {
       console.log(`[ProximityPrefetch] Initial links detection: ${links.value.length} links found`);
     }
   }, 500);
