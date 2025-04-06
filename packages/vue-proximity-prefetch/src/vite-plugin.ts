@@ -45,6 +45,20 @@ export interface VueProximityPrefetchOptions {
    * @default false
    */
   automaticPrefetch?: boolean;
+  
+  /**
+   * Enable mobile support for touch devices
+   * When true, touch events and viewport-based prefetching are enabled
+   * @default true
+   */
+  mobileSupport?: boolean;
+  
+  /**
+   * Viewport margin (in pixels) for prefetching on mobile
+   * Links that are within this distance from the viewport will be prefetched
+   * @default 300
+   */
+  viewportMargin?: number;
 }
 
 /**
@@ -55,7 +69,9 @@ const DEFAULT_OPTIONS: Required<VueProximityPrefetchOptions> = {
   predictionInterval: 0,
   maxPrefetch: 3,
   debug: false,
-  automaticPrefetch: false
+  automaticPrefetch: false,
+  mobileSupport: true,
+  viewportMargin: 300
 };
 
 /**
@@ -74,7 +90,9 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         threshold: ${options.threshold},
         predictionInterval: ${options.predictionInterval},
         maxPrefetch: ${options.maxPrefetch},
-        debug: ${options.debug} || (typeof window !== 'undefined' && window.PPF_DEBUG === true)
+        debug: ${options.debug} || (typeof window !== 'undefined' && window.PPF_DEBUG === true),
+        mobileSupport: ${options.mobileSupport},
+        viewportMargin: ${options.viewportMargin}
       };
       
       // Utils
@@ -86,6 +104,16 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
       let prefetchedRoutes = new Set();
       let lastCheck = Date.now();
       const THROTTLE_INTERVAL = 100;
+      
+      // Device detection
+      let isTouchDevice = false;
+      
+      // Detect touch devices
+      function detectTouchDevice() {
+        return (('ontouchstart' in window) || 
+                (navigator.maxTouchPoints > 0) || 
+                (navigator.msMaxTouchPoints > 0));
+      }
       
       // Calculate Euclidean distance between two points
       function calculateDistance(x1, y1, x2, y2) {
@@ -116,7 +144,20 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
           .filter(link => link !== null);
       }
       
-      // Check if mouse is near any links
+      // Check if a link is in or near the viewport
+      function isLinkInViewport(rect) {
+        // Check if fully in viewport
+        const isVisible = (
+          rect.top >= -config.viewportMargin &&
+          rect.left >= -config.viewportMargin &&
+          rect.bottom <= window.innerHeight + config.viewportMargin &&
+          rect.right <= window.innerWidth + config.viewportMargin
+        );
+        
+        return isVisible;
+      }
+      
+      // Check if mouse is near any links (for desktop)
       function checkProximity() {
         const links = getLinks();
         if (!links.length) return false;
@@ -145,20 +186,42 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         return closestLinks;
       }
       
-      // Prefetch routes when mouse is near links
+      // Check which links are in or near viewport (for mobile)
+      function checkViewportLinks() {
+        const links = getLinks();
+        if (!links.length) return false;
+        
+        // Filter links that are in or near the viewport
+        const visibleLinks = links.filter(link => isLinkInViewport(link.rect));
+        
+        if (config.debug && visibleLinks.length > 0) {
+          log(visibleLinks.length + ' links in viewport (plus margin ' + config.viewportMargin + 'px)');
+        }
+        
+        return visibleLinks;
+      }
+      
+      // Prefetch routes when mouse is near links or links are in viewport
       function prefetchNearbyRoutes() {
         const now = Date.now();
         if (now - lastCheck < THROTTLE_INTERVAL) return;
         lastCheck = now;
         
-        const closestLinks = checkProximity();
-        if (!closestLinks || !closestLinks.length) return;
+        // Choose detection strategy based on device type
+        const links = isTouchDevice ? checkViewportLinks() : checkProximity();
+        if (!links || !links.length) return;
         
-        // Sort by distance
-        closestLinks.sort((a, b) => a.distance - b.distance);
+        // Sort links: by distance for desktop, by position for mobile
+        if (isTouchDevice) {
+          // On mobile, prioritize links near the top of viewport
+          links.sort((a, b) => a.rect.top - b.rect.top);
+        } else {
+          // On desktop, keep sorting by distance
+          links.sort((a, b) => a.distance - b.distance);
+        }
         
         // Limit prefetching to maxPrefetch routes
-        const routesToPrefetch = closestLinks.slice(0, config.maxPrefetch).map(link => link.href);
+        const routesToPrefetch = links.slice(0, config.maxPrefetch).map(link => link.href);
         
         // Keep track of the first link being processed
         let isFirstPrefetch = !window.PPF_HAS_PREFETCHED;
@@ -201,6 +264,10 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
       
       // Initialize
       function init() {
+        // Detect device type
+        isTouchDevice = detectTouchDevice();
+        log('Device detection: ' + (isTouchDevice ? 'Touch device' : 'Desktop device'));
+        
         // Add debug styles to the page if in debug mode
         if (config.debug) {
           const style = document.createElement('style');
@@ -212,26 +279,65 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
           document.head.appendChild(style);
         }
         
-        // Mouse move listener
-        window.addEventListener('mousemove', (e) => {
-          mousePosition = { x: e.clientX, y: e.clientY };
+        if (isTouchDevice && config.mobileSupport) {
+          // Mobile approach: viewport-based prefetching
           
-          // Reactive mode
-          if (config.predictionInterval === 0) {
-            prefetchNearbyRoutes();
-          }
-        });
-        
-        // Interval mode
-        if (config.predictionInterval > 0) {
-          setInterval(() => {
-            if (mousePosition.x !== 0 || mousePosition.y !== 0) {
+          // 1. Check on page load
+          prefetchNearbyRoutes();
+          
+          // 2. Check on scroll with throttling
+          window.addEventListener('scroll', () => {
+            const now = Date.now();
+            if (now - lastCheck > THROTTLE_INTERVAL) {
               prefetchNearbyRoutes();
             }
-          }, config.predictionInterval);
+          }, { passive: true });
+          
+          // 3. Check on touch events
+          window.addEventListener('touchstart', () => {
+            prefetchNearbyRoutes();
+          }, { passive: true });
+          
+          // 4. Check periodically if interval is set
+          if (config.predictionInterval > 0) {
+            setInterval(prefetchNearbyRoutes, config.predictionInterval);
+          }
+          
+          log('Mobile prefetching initialized with viewport margin:', config.viewportMargin + 'px');
+        } else {
+          // Desktop approach: mouse proximity
+          
+          // Mouse move listener
+          window.addEventListener('mousemove', (e) => {
+            mousePosition = { x: e.clientX, y: e.clientY };
+            
+            // Reactive mode
+            if (config.predictionInterval === 0) {
+              prefetchNearbyRoutes();
+            }
+          });
+          
+          // Interval mode
+          if (config.predictionInterval > 0) {
+            setInterval(() => {
+              if (mousePosition.x !== 0 || mousePosition.y !== 0) {
+                prefetchNearbyRoutes();
+              }
+            }, config.predictionInterval);
+          }
+          
+          log('Desktop proximity prefetching initialized');
         }
         
-        log('Proximity prefetching initialized');
+        // Window resize handler to update link positions
+        window.addEventListener('resize', () => {
+          // Throttle resize event
+          const now = Date.now();
+          if (now - lastCheck > THROTTLE_INTERVAL * 2) {
+            lastCheck = now;
+            prefetchNearbyRoutes();
+          }
+        }, { passive: true });
       }
       
       // Start when DOM is ready
@@ -274,7 +380,9 @@ export function viteProximityPrefetch(options: VueProximityPrefetchOptions = {})
           predictionInterval: resolvedOptions.predictionInterval,
           maxPrefetch: resolvedOptions.maxPrefetch,
           automaticPrefetch: resolvedOptions.automaticPrefetch,
-          debug: resolvedOptions.debug
+          debug: resolvedOptions.debug,
+          mobileSupport: resolvedOptions.mobileSupport,
+          viewportMargin: resolvedOptions.viewportMargin
         });
       }
     },

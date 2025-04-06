@@ -25,6 +25,10 @@ interface Props {
   predictionInterval?: number;
   /** Enable debug logging */
   debug?: boolean;
+  /** Enable mobile support with viewport-based prefetching */
+  mobileSupport?: boolean;
+  /** Viewport margin for mobile prefetching */
+  viewportMargin?: number;
 }
 
 // Check if PPF_DEBUG environment variable is set
@@ -34,7 +38,9 @@ const PPF_DEBUG = typeof window !== 'undefined' && window.PPF_DEBUG === true;
 const props = withDefaults(defineProps<Props>(), {
   threshold: 200,
   predictionInterval: 0,
-  debug: false // Debug disabled by default in production
+  debug: false, // Debug disabled by default in production
+  mobileSupport: true,
+  viewportMargin: 300
 });
 
 // Determine if debug mode is enabled (either from props or PPF_DEBUG global)
@@ -60,6 +66,21 @@ const lastProximityCheck = ref(Date.now());
 
 // Minimum interval between proximity checks (ms)
 const THROTTLE_INTERVAL = 100;
+
+// Detect if we're on a touch device
+const isTouchDevice = ref(false);
+
+/**
+ * Detect touch devices
+ */
+const detectTouchDevice = (): boolean => {
+  return (
+    typeof window !== 'undefined' && 
+    (('ontouchstart' in window) || 
+     (navigator.maxTouchPoints > 0) || 
+     (navigator.msMaxTouchPoints > 0))
+  );
+};
 
 /**
  * Scan the DOM and update the list of tracked links
@@ -116,6 +137,18 @@ const calculateCenterPoint = (rect: DOMRect): { x: number, y: number } => {
 };
 
 /**
+ * Check if a link is in or near the viewport
+ */
+const isLinkInViewport = (rect: DOMRect): boolean => {
+  return (
+    rect.top >= -props.viewportMargin &&
+    rect.left >= -props.viewportMargin &&
+    rect.bottom <= window.innerHeight + props.viewportMargin &&
+    rect.right <= window.innerWidth + props.viewportMargin
+  );
+};
+
+/**
  * Check if mouse is within threshold distance of any link
  * @returns boolean indicating if mouse is near any link
  */
@@ -157,6 +190,30 @@ const checkProximity = (): boolean => {
 };
 
 /**
+ * Check which links are in or near the viewport (for mobile)
+ * @returns boolean indicating if there are links in the viewport
+ */
+const checkViewportLinks = (): boolean => {
+  if (!links.value.length) {
+    return false;
+  }
+  
+  // Update link rectangles to account for layout changes
+  links.value.forEach(link => {
+    link.rect = link.el.getBoundingClientRect();
+  });
+  
+  // Find links within viewport (plus margin)
+  const visibleLinks = links.value.filter(link => isLinkInViewport(link.rect));
+  
+  if (isDebugEnabled.value && visibleLinks.length > 0) {
+    console.debug(`[ProximityPrefetch] ${visibleLinks.length} links in viewport (plus margin ${props.viewportMargin}px)`);
+  }
+  
+  return visibleLinks.length > 0;
+};
+
+/**
  * Prefetch routes for nearby links
  */
 const prefetchNearbyRoutes = (): void => {
@@ -167,8 +224,17 @@ const prefetchNearbyRoutes = (): void => {
   }
   lastProximityCheck.value = now;
   
-  // First check if mouse is near any link
-  const hasNearbyLinks = checkProximity();
+  // Choose detection strategy based on device type
+  let hasNearbyLinks;
+  
+  if (isTouchDevice.value && props.mobileSupport) {
+    // Mobile: viewport-based detection
+    hasNearbyLinks = checkViewportLinks();
+  } else {
+    // Desktop: mouse proximity detection
+    hasNearbyLinks = checkProximity();
+  }
+  
   isMouseNearLink.value = hasNearbyLinks;
   
   // Exit early if no links are nearby
@@ -176,28 +242,42 @@ const prefetchNearbyRoutes = (): void => {
     return;
   }
   
-  // Calculate distances to find closest links
-  const linksWithDistance = links.value.map((link) => {
-    const center = calculateCenterPoint(link.rect);
-    const distance = calculateDistance(
-      mousePosition.value.x,
-      mousePosition.value.y,
-      center.x,
-      center.y
-    );
-    return { ...link, distance };
+  // Update link rectangles to account for layout changes
+  links.value.forEach(link => {
+    link.rect = link.el.getBoundingClientRect();
   });
+  
+  let linksToProcess;
+  
+  if (isTouchDevice.value && props.mobileSupport) {
+    // For mobile: Get links in viewport
+    linksToProcess = links.value.filter(link => isLinkInViewport(link.rect));
+    // Sort by vertical position (links at the top first)
+    linksToProcess.sort((a, b) => a.rect.top - b.rect.top);
+  } else {
+    // For desktop: Calculate distances to find closest links
+    const linksWithDistance = links.value.map((link) => {
+      const center = calculateCenterPoint(link.rect);
+      const distance = calculateDistance(
+        mousePosition.value.x,
+        mousePosition.value.y,
+        center.x,
+        center.y
+      );
+      return { ...link, distance };
+    });
 
-  // Sort by distance (closest first)
-  linksWithDistance.sort((a, b) => a.distance - b.distance);
+    // Sort by distance (closest first)
+    linksWithDistance.sort((a, b) => a.distance - b.distance);
 
-  // Filter for links within threshold
-  const closestLinks = linksWithDistance.filter(
-    (link) => link.distance < props.threshold
-  );
-
+    // Filter for links within threshold
+    linksToProcess = linksWithDistance
+      .filter((link) => link.distance < props.threshold)
+      .map(({ el, href, rect }) => ({ el, href, rect })); // Strip the distance property
+  }
+  
   // Get routes to prefetch
-  const routesToPrefetch = closestLinks.map((link) => link.href);
+  const routesToPrefetch = linksToProcess.map((link) => link.href);
 
   // Limit to 3 routes at a time to avoid excessive prefetching
   const MAX_PREFETCH = 3;
@@ -223,6 +303,7 @@ const prefetchNearbyRoutes = (): void => {
           Object.values(comps).forEach(comp => {
             // Use a safer approach with explicit type casting
             const asyncComp = comp as any;
+            
             if (typeof asyncComp === 'function') {
               try {
                 // Call component to trigger loading
@@ -271,74 +352,40 @@ const handleMouseMove = (e: MouseEvent): void => {
   mousePosition.value = { x: e.clientX, y: e.clientY };
 };
 
-// Register mouse movement listener
-window.addEventListener('mousemove', handleMouseMove);
-
-// Scan for links after a short delay to ensure DOM is fully loaded
-setTimeout(() => {
-  updateLinks();
-  if (isDebugEnabled.value) {
-    console.log(`[ProximityPrefetch] Initial links detection: ${links.value.length} links found`);
-  }
-}, 500);
-
-// Set up MutationObserver to detect new links or changes to existing ones
-const observer = new MutationObserver(() => {
-  updateLinks();
-});
-
-// Start observing DOM changes
-observer.observe(document.body, {
-  childList: true,  // Watch for added/removed nodes
-  subtree: true,    // Include descendants
-  attributes: true, // Watch for attribute changes
-  attributeFilter: ['href'] // Only care about href changes
-});
-
 /**
- * Configure prefetching system based on parameters
+ * Handle scroll events (for mobile)
  */
-let intervalId: number | undefined;
-
-// Two prefetching modes:
-if (props.predictionInterval > 0) {
-  // 1. Interval mode: periodic checking
-  intervalId = window.setInterval(() => {
-    // Only check if mouse has moved (avoid unnecessary checks)
-    if (mousePosition.value.x !== 0 || mousePosition.value.y !== 0) {
-      prefetchNearbyRoutes();
-    }
-  }, props.predictionInterval);
-} else {
-  // 2. Reactive mode: check on mouse movements with throttling
-  const throttledPrefetch = (): void => {
+const handleScroll = (): void => {
+  if (isTouchDevice.value && props.mobileSupport) {
     const now = Date.now();
     if (now - lastProximityCheck.value >= THROTTLE_INTERVAL) {
       prefetchNearbyRoutes();
     }
-  };
-  
-  // Watch for mouse position changes
-  watch(mousePosition, () => {
-    throttledPrefetch();
-  });
-}
-
-// Clean up event listeners and observers on component unmount
-onUnmounted(() => {
-  window.removeEventListener('mousemove', handleMouseMove);
-  observer.disconnect();
-  if (intervalId) {
-    window.clearInterval(intervalId);
   }
-});
+};
 
+/**
+ * Handle touch events (for mobile)
+ */
+const handleTouch = (): void => {
+  if (isTouchDevice.value && props.mobileSupport) {
+    prefetchNearbyRoutes();
+  }
+};
+
+// Register event listeners based on device type
 onMounted(() => {
+  // Detect device type
+  isTouchDevice.value = detectTouchDevice();
+  
   if (isDebugEnabled.value) {
     console.log('[ProximityPrefetch] Component mounted with options:', {
       threshold: props.threshold,
       predictionInterval: props.predictionInterval,
-      debug: isDebugEnabled.value
+      debug: isDebugEnabled.value,
+      mobileSupport: props.mobileSupport,
+      viewportMargin: props.viewportMargin,
+      deviceType: isTouchDevice.value ? 'Touch device' : 'Desktop device'
     });
     
     // Add debug styles for the visual indicators
@@ -351,6 +398,95 @@ onMounted(() => {
     `;
     document.head.appendChild(style);
   }
+  
+  // Scan for links after a short delay to ensure DOM is fully loaded
+  setTimeout(() => {
+    updateLinks();
+    if (isDebugEnabled.value) {
+      console.log(`[ProximityPrefetch] Initial links detection: ${links.value.length} links found`);
+    }
+
+    // Initial prefetch on load (particularly important for mobile)
+    prefetchNearbyRoutes();
+  }, 500);
+
+  // Set up MutationObserver to detect new links or changes to existing ones
+  const observer = new MutationObserver(() => {
+    updateLinks();
+  });
+
+  // Start observing DOM changes
+  observer.observe(document.body, {
+    childList: true,  // Watch for added/removed nodes
+    subtree: true,    // Include descendants
+    attributes: true, // Watch for attribute changes
+    attributeFilter: ['href'] // Only care about href changes
+  });
+
+  // Configure event listeners based on device type
+  if (isTouchDevice.value && props.mobileSupport) {
+    // Mobile: use scroll and touch events
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('touchstart', handleTouch, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+    
+    if (isDebugEnabled.value) {
+      console.log('[ProximityPrefetch] Mobile mode initialized with viewport margin:', props.viewportMargin + 'px');
+    }
+  } else {
+    // Desktop: use mouse events
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    if (isDebugEnabled.value) {
+      console.log('[ProximityPrefetch] Desktop mode initialized');
+    }
+  }
+
+  /**
+   * Configure prefetching system based on parameters
+   */
+  let intervalId: number | undefined;
+
+  // Two prefetching modes:
+  if (props.predictionInterval > 0) {
+    // 1. Interval mode: periodic checking
+    intervalId = window.setInterval(() => {
+      // Only check if mouse has moved (avoid unnecessary checks) for desktop
+      // or always check for mobile
+      if (isTouchDevice.value || mousePosition.value.x !== 0 || mousePosition.value.y !== 0) {
+        prefetchNearbyRoutes();
+      }
+    }, props.predictionInterval);
+  } else if (!isTouchDevice.value) {
+    // 2. Reactive mode: check on mouse movements with throttling (desktop only)
+    const throttledPrefetch = (): void => {
+      const now = Date.now();
+      if (now - lastProximityCheck.value >= THROTTLE_INTERVAL) {
+        prefetchNearbyRoutes();
+      }
+    };
+    
+    // Watch for mouse position changes
+    watch(mousePosition, () => {
+      throttledPrefetch();
+    });
+  }
+
+  // Clean up event listeners and observers on component unmount
+  onUnmounted(() => {
+    if (isTouchDevice.value && props.mobileSupport) {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchstart', handleTouch);
+      window.removeEventListener('resize', handleScroll);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+    }
+    
+    observer.disconnect();
+    if (intervalId) {
+      window.clearInterval(intervalId);
+    }
+  });
 });
 </script>
 

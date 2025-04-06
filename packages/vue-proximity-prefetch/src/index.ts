@@ -15,6 +15,42 @@ export { ProximityPrefetch };
 export * from './vite-plugin';
 
 /**
+ * Component props interface
+ */
+export interface ProximityPrefetchProps {
+  /** Distance threshold in pixels to trigger prefetching */
+  threshold?: number;
+  /** Interval for periodic checks in milliseconds (0 means reactive to mouse movements) */
+  predictionInterval?: number;
+  /** Enable debug logging */
+  debug?: boolean;
+  /** Enable mobile support with viewport-based prefetching */
+  mobileSupport?: boolean;
+  /** Viewport margin for mobile prefetching */
+  viewportMargin?: number;
+}
+
+/**
+ * Plugin configuration options
+ */
+export interface ProximityPrefetchOptions {
+  /** Distance threshold in pixels to trigger prefetching */
+  threshold?: number;
+  /** Interval for periodic checks in milliseconds */
+  predictionInterval?: number;
+  /** Maximum number of routes to prefetch simultaneously */
+  maxPrefetch?: number;
+  /** Enable automatic prefetching without the Vue component */
+  automaticPrefetch?: boolean;
+  /** Enable debug logging */
+  debug?: boolean;
+  /** Enable mobile support for touch devices */
+  mobileSupport?: boolean;
+  /** Viewport margin for mobile prefetching */
+  viewportMargin?: number;
+}
+
+/**
  * Vue plugin for proximity-based route prefetching
  * Usage: app.use(ProximityPrefetchPlugin)
  */
