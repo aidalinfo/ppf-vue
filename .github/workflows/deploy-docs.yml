@@ -58,7 +58,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+  
+      - name: Build plugin
+        run: pnpm run build:plugin
+        
       - name: Build documentation
         run: pnpm docs:build
       
