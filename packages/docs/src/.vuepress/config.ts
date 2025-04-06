@@ -12,7 +12,7 @@ export default defineUserConfig({
           predictionInterval: 0,
           maxPrefetch: 3,
           automaticPrefetch: true,
-          debug: true
+          debug: false
         })
       ]
     }
