@@ -119,7 +119,7 @@ export default defineConfig({
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `threshold` | `number` | `200` | Distance in pixels at which prefetching triggers |
-| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity (0 means reactive to mouse movements) |
+| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity (0 means checks only happen when the mouse moves) |
 | `debug` | `boolean` | `false` | Enable debug logging |
 
 ### Vite Plugin Options
@@ -127,7 +127,7 @@ export default defineConfig({
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `threshold` | `number` | `200` | Distance in pixels at which prefetching triggers |
-| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity |
+| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity (0 means checks only happen when the mouse moves) |
 | `maxPrefetch` | `number` | `3` | Maximum number of routes to prefetch at once |
 | `debug` | `boolean` | `false` | Enable debug logging |
 | `automaticPrefetch` | `boolean` | `false` | Enable automatic prefetching without the Vue component |

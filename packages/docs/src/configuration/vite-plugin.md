@@ -26,7 +26,7 @@ viteProximityPrefetch({
 
 ### predictionInterval
 
-The `predictionInterval` option defines the interval in milliseconds between link proximity checks. A value of `0` (default) means the check is tied to mouse movement events.
+The `predictionInterval` option defines the interval in milliseconds between link proximity checks. A value of `0` (default) means the check only happens when the mouse moves (reactive to mouse movement events).
 
 ```js
 viteProximityPrefetch({
