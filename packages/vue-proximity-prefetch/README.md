@@ -6,7 +6,6 @@
 [![GitHub stars](https://img.shields.io/github/stars/aidalinfo/ppf-vue.svg?style=flat-square&label=★)](https://github.com/aidalinfo/ppf-vue)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/aidalinfo/ppf-vue/main/packages/app-example/public/ppf-vue-logo.png" alt="Vue Proximity Prefetch Logo" width="180">
 
   <p><strong>Boost your Vue app's perceived performance by prefetching routes when the mouse approaches links</strong></p>
 </div>
