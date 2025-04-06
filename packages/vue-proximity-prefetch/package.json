@@ -1,6 +1,6 @@
 {
   "name": "v-proximity-prefetch",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Vue plugin that prefetches routes when the mouse approaches links for faster navigation",
   "type": "module",
   "main": "dist/index.cjs",
