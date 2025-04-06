@@ -1,9 +1,22 @@
 import { defineUserConfig } from 'vuepress'
 import { defaultTheme } from '@vuepress/theme-default'
 import { viteBundler } from '@vuepress/bundler-vite'
+import { viteProximityPrefetch } from 'v-proximity-prefetch'
 
 export default defineUserConfig({
-  bundler: viteBundler(),
+  bundler: viteBundler({
+    viteOptions: {
+      plugins: [
+        viteProximityPrefetch({
+          threshold: 250,
+          predictionInterval: 0,
+          maxPrefetch: 3,
+          automaticPrefetch: true,
+          debug: false
+        })
+      ]
+    }
+  }),
   base: '/v-proximity-prefetch/', // Ajout du chemin de base pour GitHub Pages
   lang: 'en-US',
   title: 'Vue Proximity Prefetch',
