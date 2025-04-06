@@ -1,39 +1,50 @@
 # Vue Proximity Prefetch
 
-Un plugin Vue.js qui précharge automatiquement les routes lorsque l'utilisateur approche sa souris des liens, offrant une expérience de navigation plus rapide et fluide.
+[![npm version](https://img.shields.io/npm/v/vue-proximity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/vue-proximity-prefetch)
+[![GitHub license](https://img.shields.io/github/license/aidalinfo/ppf-vue?style=flat-square)](https://github.com/aidalinfo/ppf-vue/blob/main/LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/vue-proximity-prefetch.svg?style=flat-square)](https://www.npmjs.com/package/vue-proximity-prefetch)
+[![GitHub stars](https://img.shields.io/github/stars/aidalinfo/ppf-vue.svg?style=flat-square&label=★)](https://github.com/aidalinfo/ppf-vue)
 
-## Fonctionnalités
+<div align="center">
+  <img src="https://raw.githubusercontent.com/aidalinfo/ppf-vue/main/packages/app-example/public/ppf-vue-logo.png" alt="Vue Proximity Prefetch Logo" width="180">
 
-- Détecte lorsque la souris de l'utilisateur s'approche des liens de navigation
-- Précharge automatiquement les composants des routes correspondantes sans naviguer
-- Optimise l'expérience utilisateur en réduisant les temps de chargement perçus
-- Fonctionne avec Vue Router
-- S'intègre facilement avec Vite
-- Peut être utilisé comme simple plugin Vite sans avoir à ajouter le composant Vue
+  <p><strong>Boost your Vue app's perceived performance by prefetching routes when the mouse approaches links</strong></p>
+</div>
+
+## Features
+
+- 🔍 **Smart Detection**: Detects when the user's mouse approaches navigation links
+- ⚡ **Automatic Prefetching**: Preloads route components before the user clicks
+- 📈 **Enhanced UX**: Reduces perceived loading times for smoother navigation
+- 🔌 **Simple Integration**: Two easy ways to integrate - Vue component or Vite plugin
+- 🔧 **Highly Configurable**: Customize threshold distance, prediction intervals, and more
+- 🪶 **Lightweight**: Minimal overhead with intelligent throttling
 
 ## Installation
 
 ```bash
+# npm
 npm install vue-proximity-prefetch
-# ou
+
+# yarn
 yarn add vue-proximity-prefetch
-# ou
+
+# pnpm
 pnpm add vue-proximity-prefetch
 ```
 
-## Utilisation
+## Getting Started
 
-Vous pouvez utiliser Vue Proximity Prefetch de deux façons :
+There are two ways to use Vue Proximity Prefetch:
 
-1. **Avec le composant Vue** : Utilisation traditionnelle avec le composant Vue et le plugin Vue
-2. **Plugin Vite seulement** : Utilisation simplifiée qui ne nécessite pas d'ajouter de composant à votre application
+### Method 1: Using the Vue Component and Plugin
 
-### Option 1: Intégrer le plugin Vue et le composant
+This method gives you fine-grained control over which parts of your app use proximity prefetching.
 
-#### 1. Intégrer le plugin dans votre application Vue
+#### 1. Register the Plugin in your Vue app:
 
-```ts
-// main.ts
+```js
+// main.ts or main.js
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
@@ -43,36 +54,35 @@ const app = createApp(App)
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // vos routes...
+    // your routes...
   ]
 })
 
 app.use(router)
-app.use(ProximityPrefetchPlugin)
+app.use(ProximityPrefetchPlugin) // register the plugin
 
 app.mount('#app')
 ```
 
-#### 2. Utiliser le composant ProximityPrefetch
+#### 2. Use the Component in your template:
 
 ```vue
-<!-- App.vue -->
+<!-- App.vue or any layout component -->
 <template>
-  <div>
-    <header>
-      <nav>
-        <router-link to="/">Accueil</router-link>
-        <router-link to="/about">À propos</router-link>
-        <router-link to="/contact">Contact</router-link>
-      </nav>
-    </header>
+  <header>
+    <nav>
+      <router-link to="/">Home</router-link>
+      <router-link to="/about">About</router-link>
+      <router-link to="/contact">Contact</router-link>
+    </nav>
+  </header>
 
-    <main>
-      <ProximityPrefetch :threshold="200" :prediction-interval="100">
-        <router-view />
-      </ProximityPrefetch>
-    </main>
-  </div>
+  <main>
+    <!-- Wrap your router-view with ProximityPrefetch -->
+    <ProximityPrefetch :threshold="200" :prediction-interval="0">
+      <router-view />
+    </ProximityPrefetch>
+  </main>
 </template>
 
 <script setup>
@@ -80,12 +90,12 @@ import { ProximityPrefetch } from 'vue-proximity-prefetch'
 </script>
 ```
 
-### Option 2: Utiliser uniquement le plugin Vite (nouveauté)
+### Method 2: Using the Vite Plugin Only
 
-Cette méthode est plus simple car elle ne nécessite pas d'ajouter le composant Vue ni d'utiliser le plugin Vue. Le plugin Vite injecte automatiquement le code nécessaire pour le préchargement basé sur la proximité.
+This method is simpler and doesn't require adding components to your app. Perfect for quick implementation.
 
-```ts
-// vite.config.ts
+```js
+// vite.config.js or vite.config.ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { viteProximityPrefetch } from 'vue-proximity-prefetch'
@@ -95,47 +105,69 @@ export default defineConfig({
     vue(),
     viteProximityPrefetch({
       threshold: 200,
-      predictionInterval: 100,
+      predictionInterval: 0,
       maxPrefetch: 3,
-      debug: true,
-      automaticPrefetch: true // Active le préchargement automatique sans composant Vue
+      automaticPrefetch: true // This enables automatic prefetching!
     })
   ]
 })
 ```
 
-## Options
+## Configuration Options
 
-### Composant ProximityPrefetch
+### Component Props
 
-| Propriété | Type | Par défaut | Description |
-|-----------|------|------------|-------------|
-| `threshold` | `number` | `200` | Distance en pixels à partir de laquelle le préchargement se déclenche |
-| `predictionInterval` | `number` | `0` | Intervalle en ms pour vérifier et prédire les routes à précharger (0 = vérification à chaque mouvement de souris) |
-| `debug` | `boolean` | `false` | Active les logs de débogage pour voir quand les routes sont préchargées |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `threshold` | `number` | `200` | Distance in pixels at which prefetching triggers |
+| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity (0 means reactive to mouse movements) |
+| `debug` | `boolean` | `false` | Enable debug logging |
 
-### Plugin Vite
+### Vite Plugin Options
 
-| Option | Type | Par défaut | Description |
-|--------|------|------------|-------------|
-| `threshold` | `number` | `200` | Distance en pixels à partir de laquelle le préchargement se déclenche |
-| `predictionInterval` | `number` | `0` | Intervalle en ms pour vérifier et prédire les routes à précharger |
-| `maxPrefetch` | `number` | `3` | Nombre maximum de routes à précharger simultanément |
-| `debug` | `boolean` | `false` | Active les logs de débogage |
-| `automaticPrefetch` | `boolean` | `false` | Active le préchargement automatique sans avoir besoin du composant Vue |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `threshold` | `number` | `200` | Distance in pixels at which prefetching triggers |
+| `predictionInterval` | `number` | `0` | Interval in ms for checking link proximity |
+| `maxPrefetch` | `number` | `3` | Maximum number of routes to prefetch at once |
+| `debug` | `boolean` | `false` | Enable debug logging |
+| `automaticPrefetch` | `boolean` | `false` | Enable automatic prefetching without the Vue component |
 
-## Quand utiliser le plugin Vite ou le composant Vue ?
+### Debug Mode
 
-- **Plugin Vite uniquement** (`automaticPrefetch: true`) :
-  - Avantage : Configuration minimale, pas besoin de modifier votre application
-  - Utilisation : Projets simples ou prototypes où vous voulez rapidement ajouter le préchargement
-  - Fonctionnement : Utilise l'API Prefetch standard du navigateur
+You can enable debug mode by setting the `PPF_DEBUG` environment variable:
 
-- **Composant Vue** :
-  - Avantage : Préchargement plus avancé qui fonctionne avec Vue Router et charge les composants
-  - Utilisation : Applications complexes où vous voulez un contrôle précis sur le préchargement
-  - Fonctionnement : Précharge les composants Vue Router en plus des routes
+```bash
+PPF_DEBUG=true npm run build
+```
 
-## Licence
+Or in the browser console:
 
-MIT
+```js
+window.PPF_DEBUG = true
+```
+
+## When to Use Each Method
+
+- **Component Method**: More control, prefetches both Vue Router components and routes
+- **Vite Plugin Method**: Simpler implementation, uses browser's standard prefetching
+
+## Demo
+
+Check out the [live demo](https://vue-proximity-prefetch-demo.netlify.app/) to see the performance difference!
+
+## Browser Support
+
+Vue Proximity Prefetch works in all modern browsers that support `<link rel="prefetch">`.
+
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](https://github.com/aidalinfo/ppf-vue/blob/main/packages/vue-proximity-prefetch/CONTRIBUTING.md) for details.
+
+## License
+
+[MIT](https://github.com/aidalinfo/ppf-vue/blob/main/LICENSE)
+
+---
+
+If you find this plugin useful, please ⭐ the [GitHub repository](https://github.com/aidalinfo/ppf-vue) and share it with other Vue developers!
