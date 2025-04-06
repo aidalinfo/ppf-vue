@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*' # This will trigger the workflow when a tag starting with 'v' is pushed
 
+# Add explicit permissions for the workflow
+permissions:
+  contents: write # This is needed for creating releases
+  packages: write # This is needed for publishing packages
+
 jobs:
   publish:
     runs-on: ubuntu-latest
