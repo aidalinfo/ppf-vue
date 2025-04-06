@@ -28,6 +28,7 @@ export default defineUserConfig({
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/' },
       { text: 'Configuration', link: '/configuration/' },
+      { text: 'Integrations', link: '/integrations/' },
       { text: 'Vite', link: '/vite/' },
       { text: 'GitHub', link: 'https://github.com/aidalinfo/ppf-vue' }
     ],
@@ -49,6 +50,15 @@ export default defineUserConfig({
             '/configuration/README.md',
             '/configuration/component-props.md',
             '/configuration/vite-plugin.md',
+          ],
+        }
+      ],
+      '/integrations/': [
+        {
+          text: 'Integrations',
+          children: [
+            '/integrations/README.md',
+            '/integrations/nuxt.md',
           ],
         }
       ],

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ProximityPrefetch } from 'vue-proximity-prefetch';
+// Pas besoin d'importer ProximityPrefetch quand on utilise le plugin Vite
 </script>
 
 <template>
@@ -14,12 +14,10 @@ import { ProximityPrefetch } from 'vue-proximity-prefetch';
     </header>
 
     <main>
-      <!-- Wrap the router view with our ProximityPrefetch component -->
-      <ProximityPrefetch :threshold="200" :prediction-interval="100" :debug="true">
-        <router-view v-slot="{ Component }">
-            <component :is="Component" />
-        </router-view>
-      </ProximityPrefetch>
+      <!-- Plus besoin du wrapper ProximityPrefetch quand on utilise le plugin Vite -->
+      <router-view v-slot="{ Component }">
+          <component :is="Component" />
+      </router-view>
     </main>
 
     <footer>

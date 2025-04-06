@@ -102,7 +102,7 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
       
       // Get all valid links on the page
       function getLinks() {
-        const anchors = Array.from(document.querySelectorAll('a'));
+        const anchors = Array.from(document.querySelectorAll('a[href]'));
         return anchors
           .map((el) => {
             const href = el.getAttribute('href');

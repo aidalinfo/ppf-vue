@@ -8,6 +8,13 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
+// Étendre l'interface Window pour inclure notre propriété PPF_DEBUG
+declare global {
+  interface Window {
+    PPF_DEBUG?: boolean;
+  }
+}
+
 /**
  * Component props interface
  */
@@ -58,9 +65,9 @@ const THROTTLE_INTERVAL = 100;
  * Scan the DOM and update the list of tracked links
  */
 const updateLinks = () => {
-  // Get all anchor elements
+  // Get all anchor elements with href attribute
   const anchors = Array.from(
-    document.querySelectorAll('a')
+    document.querySelectorAll('a[href]')
   ) as HTMLAnchorElement[];
   
   if (isDebugEnabled.value) {
