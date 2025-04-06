@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # Suppression de l'option cache: 'npm' qui causait l'erreur
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -63,7 +63,7 @@ jobs:
         run: pnpm docs:build
       
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v3
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
