@@ -32,10 +32,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build plugin
-        run: pnpm --filter vue-proximity-prefetch run build
-
-      - name: Run tests
-        run: pnpm --filter vue-proximity-prefetch test || true # Continue even if tests fail
+        run: pnpm --filter v-proximity-prefetch run build
 
       - name: Publish to npm
         working-directory: ./packages/vue-proximity-prefetch
