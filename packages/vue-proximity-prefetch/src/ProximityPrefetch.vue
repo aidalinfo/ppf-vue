@@ -239,11 +239,99 @@ const prefetchNearbyRoutes = (): void => {
       
       // Mark as prefetched to avoid duplicate prefetching
       prefetchedRoutes.value.add(route);
+      
+      // Add visual indicator for prefetched links in debug mode
+      if (isDebugEnabled.value) {
+        // Find all link elements pointing to this route
+        const matchingAnchors = Array.from(
+          document.querySelectorAll(`a[href="${route}"]`)
+        ) as HTMLAnchorElement[];
+        
+        matchingAnchors.forEach(anchor => {
+          // Add a red border directly to the link element if not already applied
+          if (!anchor.hasAttribute('data-ppf-debug-applied')) {
+            anchor.setAttribute('data-ppf-debug-applied', 'true');
+            anchor.classList.add('ppf-debug-highlight');
+            anchor.title = `Prefetched: ${route}`;
+          }
+        });
+      }
     } catch (err) {
-      console.error('[ProximityPrefetch] Error prefetching route:', route, err);
+      if (isDebugEnabled.value) {
+        console.error('[ProximityPrefetch] Error prefetching route:', err);
+      }
     }
   }
 };
+
+/**
+ * Handle mouse movement events
+ */
+const handleMouseMove = (e: MouseEvent): void => {
+  mousePosition.value = { x: e.clientX, y: e.clientY };
+};
+
+// Register mouse movement listener
+window.addEventListener('mousemove', handleMouseMove);
+
+// Scan for links after a short delay to ensure DOM is fully loaded
+setTimeout(() => {
+  updateLinks();
+  if (isDebugEnabled.value) {
+    console.log(`[ProximityPrefetch] Initial links detection: ${links.value.length} links found`);
+  }
+}, 500);
+
+// Set up MutationObserver to detect new links or changes to existing ones
+const observer = new MutationObserver(() => {
+  updateLinks();
+});
+
+// Start observing DOM changes
+observer.observe(document.body, {
+  childList: true,  // Watch for added/removed nodes
+  subtree: true,    // Include descendants
+  attributes: true, // Watch for attribute changes
+  attributeFilter: ['href'] // Only care about href changes
+});
+
+/**
+ * Configure prefetching system based on parameters
+ */
+let intervalId: number | undefined;
+
+// Two prefetching modes:
+if (props.predictionInterval > 0) {
+  // 1. Interval mode: periodic checking
+  intervalId = window.setInterval(() => {
+    // Only check if mouse has moved (avoid unnecessary checks)
+    if (mousePosition.value.x !== 0 || mousePosition.value.y !== 0) {
+      prefetchNearbyRoutes();
+    }
+  }, props.predictionInterval);
+} else {
+  // 2. Reactive mode: check on mouse movements with throttling
+  const throttledPrefetch = (): void => {
+    const now = Date.now();
+    if (now - lastProximityCheck.value >= THROTTLE_INTERVAL) {
+      prefetchNearbyRoutes();
+    }
+  };
+  
+  // Watch for mouse position changes
+  watch(mousePosition, () => {
+    throttledPrefetch();
+  });
+}
+
+// Clean up event listeners and observers on component unmount
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleMouseMove);
+  observer.disconnect();
+  if (intervalId) {
+    window.clearInterval(intervalId);
+  }
+});
 
 onMounted(() => {
   if (isDebugEnabled.value) {
@@ -252,76 +340,17 @@ onMounted(() => {
       predictionInterval: props.predictionInterval,
       debug: isDebugEnabled.value
     });
-  }
-
-  /**
-   * Handle mouse movement events
-   */
-  const handleMouseMove = (e: MouseEvent): void => {
-    mousePosition.value = { x: e.clientX, y: e.clientY };
-  };
-
-  // Register mouse movement listener
-  window.addEventListener('mousemove', handleMouseMove);
-  
-  // Scan for links after a short delay to ensure DOM is fully loaded
-  setTimeout(() => {
-    updateLinks();
-    if (isDebugEnabled.value) {
-      console.log(`[ProximityPrefetch] Initial links detection: ${links.value.length} links found`);
-    }
-  }, 500);
-
-  // Set up MutationObserver to detect new links or changes to existing ones
-  const observer = new MutationObserver(() => {
-    updateLinks();
-  });
-
-  // Start observing DOM changes
-  observer.observe(document.body, {
-    childList: true,  // Watch for added/removed nodes
-    subtree: true,    // Include descendants
-    attributes: true, // Watch for attribute changes
-    attributeFilter: ['href'] // Only care about href changes
-  });
-
-  /**
-   * Configure prefetching system based on parameters
-   */
-  let intervalId: number | undefined;
-
-  // Two prefetching modes:
-  if (props.predictionInterval > 0) {
-    // 1. Interval mode: periodic checking
-    intervalId = window.setInterval(() => {
-      // Only check if mouse has moved (avoid unnecessary checks)
-      if (mousePosition.value.x !== 0 || mousePosition.value.y !== 0) {
-        prefetchNearbyRoutes();
-      }
-    }, props.predictionInterval);
-  } else {
-    // 2. Reactive mode: check on mouse movements with throttling
-    const throttledPrefetch = (): void => {
-      const now = Date.now();
-      if (now - lastProximityCheck.value >= THROTTLE_INTERVAL) {
-        prefetchNearbyRoutes();
-      }
-    };
     
-    // Watch for mouse position changes
-    watch(mousePosition, () => {
-      throttledPrefetch();
-    });
+    // Add debug styles for the visual indicators
+    const style = document.createElement('style');
+    style.textContent = `
+      .ppf-debug-highlight {
+        border: 2px solid red !important;
+        box-sizing: border-box;
+      }
+    `;
+    document.head.appendChild(style);
   }
-
-  // Clean up event listeners and observers on component unmount
-  onUnmounted(() => {
-    window.removeEventListener('mousemove', handleMouseMove);
-    observer.disconnect();
-    if (intervalId) {
-      window.clearInterval(intervalId);
-    }
-  });
 });
 </script>
 

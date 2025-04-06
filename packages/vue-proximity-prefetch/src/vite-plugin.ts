@@ -89,7 +89,7 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
       
       // Calculate Euclidean distance between two points
       function calculateDistance(x1, y1, x2, y2) {
-        return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        return Math.sqrt((x2 - x1) ** 2 + (y1 - y2) ** 2);
       }
       
       // Calculate center point of a DOMRect
@@ -139,7 +139,7 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         );
         
         if (config.debug && closestLinks.length > 0) {
-          log(\`\${closestLinks.length} links within threshold \${config.threshold}px\`);
+          log(closestLinks.length + ' links within threshold ' + config.threshold + 'px');
         }
         
         return closestLinks;
@@ -160,6 +160,9 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
         // Limit prefetching to maxPrefetch routes
         const routesToPrefetch = closestLinks.slice(0, config.maxPrefetch).map(link => link.href);
         
+        // Keep track of the first link being processed
+        let isFirstPrefetch = !window.PPF_HAS_PREFETCHED;
+        
         // Prefetch routes
         for (const route of routesToPrefetch) {
           if (prefetchedRoutes.has(route)) continue;
@@ -175,6 +178,21 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
             document.head.appendChild(link);
             
             prefetchedRoutes.add(route);
+            
+            // In debug mode, add a visual indicator around the link
+            if (config.debug) {
+              // Find all link elements pointing to this route
+              const matchingAnchors = Array.from(document.querySelectorAll('a[href="' + route + '"]'));
+              
+              matchingAnchors.forEach(anchor => {
+                // Add a red border directly to the link element if not already applied
+                if (!anchor.hasAttribute('data-ppf-debug-applied')) {
+                  anchor.setAttribute('data-ppf-debug-applied', 'true');
+                  anchor.classList.add('ppf-debug-highlight');
+                  anchor.title = 'Prefetched: ' + route;
+                }
+              });
+            }
           } catch (err) {
             console.error('[ProximityPrefetch] Error prefetching route:', route, err);
           }
@@ -183,6 +201,17 @@ function generatePrefetchScript(options: Required<VueProximityPrefetchOptions>):
       
       // Initialize
       function init() {
+        // Add debug styles to the page if in debug mode
+        if (config.debug) {
+          const style = document.createElement('style');
+          style.textContent = 
+            '.ppf-debug-highlight {' +
+            '  border: 2px solid red !important;' +
+            '  box-sizing: border-box;' +
+            '}';
+          document.head.appendChild(style);
+        }
+        
         // Mouse move listener
         window.addEventListener('mousemove', (e) => {
           mousePosition = { x: e.clientX, y: e.clientY };
