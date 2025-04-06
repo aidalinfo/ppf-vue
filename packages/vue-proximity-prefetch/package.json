@@ -1,5 +1,5 @@
 {
-  "name": "@aidalinfo/vue-proximity-prefetch",
+  "name": "v-proxmity-prefetch",
   "version": "1.0.0",
   "description": "Vue plugin that prefetches routes when the mouse approaches links for faster navigation",
   "type": "module",
