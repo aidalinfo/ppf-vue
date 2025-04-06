@@ -10,7 +10,9 @@
     "dev:app": "pnpm --filter app-example run dev",
     "build:plugin": "pnpm --filter vue-proximity-prefetch run build",
     "build:all": "pnpm run build:plugin && pnpm --filter app-example run build",
-    "start": "pnpm run dev:app"
+    "start": "pnpm run dev:app",
+    "docs:dev": "pnpm --filter v-proximity-prefetch-docs run docs:dev",
+    "docs:build": "pnpm --filter v-proximity-prefetch-docs run docs:build"
   },
   "engines": {
     "node": ">=20.0.0",
