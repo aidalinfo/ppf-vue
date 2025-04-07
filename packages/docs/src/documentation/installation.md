@@ -40,4 +40,4 @@ After installation, you can verify that the package is correctly installed by lo
 
 ## Next Steps
 
-Once Vue Proximity Prefetch is installed, you can start using it in your application. Check out the [Getting Started](/guide/getting-started) section to learn how to integrate the library into your application.
+Once Vue Proximity Prefetch is installed, you can start using it in your application. Check out the [Getting Started](/documentation/getting-started) section to learn how to integrate the library into your application.

@@ -45,4 +45,4 @@ yarn add v-proximity-prefetch
 pnpm add v-proximity-prefetch
 ```
 
-Check out the [Getting Started Guide](/v-proximity-prefetch/guide/) for a complete introduction.
+Check out the [Getting Started Guide](/v-proximity-prefetch/documentation/) for a complete introduction.

@@ -1,6 +1,6 @@
 # Getting Started
 
-After [installing Vue Proximity Prefetch](/v-proximity-prefetch/guide/installation), you can integrate it into your Vue application in two different ways. Choose the one that best suits your needs.
+After [installing Vue Proximity Prefetch](/v-proximity-prefetch/documentation/installation), you can integrate it into your Vue application in two different ways. Choose the one that best suits your needs.
 
 ## Method 1: Using the Vue Component and Plugin
 
