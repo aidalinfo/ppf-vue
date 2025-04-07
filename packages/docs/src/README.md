@@ -28,10 +28,6 @@ Boost your Vue app's perceived performance by prefetching routes when the mouse 
   </div>
 </div>
 
-::: warning COMPATIBILITY
-Vue Proximity Prefetch is compatible with Vue 3 and requires Vue Router.
-:::
-
 ## Quick Start
 
 ```bash
